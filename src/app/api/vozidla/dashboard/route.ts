@@ -106,6 +106,26 @@ export async function GET() {
     .sort((a, b) => new Date(a!.deadlineDate).getTime() - new Date(b!.deadlineDate).getTime())
     .slice(0, 10);
 
+  // Vozidla s akutní STK (prošlá nebo do 30 dní)
+  const stkAlertVehicles = await prisma.vehicle.findMany({
+    where: {
+      active: true,
+      stkNextDate: { not: null, lte: in30Days },
+    },
+    select: { id: true, name: true, spz: true, category: true, stkNextDate: true },
+    orderBy: { stkNextDate: "asc" },
+  });
+
+  // Vozidla s akutním olejem (prošlá nebo do 30 dní)
+  const oilAlertVehicles = await prisma.vehicle.findMany({
+    where: {
+      active: true,
+      oilNextDate: { not: null, lte: in30Days },
+    },
+    select: { id: true, name: true, spz: true, category: true, oilNextDate: true, oilNextKm: true, oilNextHours: true },
+    orderBy: { oilNextDate: "asc" },
+  });
+
   return jsonResponse({
     totalVehicles,
     activeVehicles,
@@ -116,5 +136,7 @@ export async function GET() {
     openTasks,
     urgentTasks,
     upcomingDeadlines,
+    stkAlertVehicles,
+    oilAlertVehicles,
   });
 }

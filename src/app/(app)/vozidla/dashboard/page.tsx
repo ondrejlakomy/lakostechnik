@@ -22,19 +22,33 @@ function getDateStatus(date: string | null): { color: string; label: string } {
   return { color: "bg-green-100 text-green-700", label: d.toLocaleDateString("cs-CZ") };
 }
 
+interface AlertVehicle {
+  id: string;
+  name: string;
+  spz: string | null;
+  category: string;
+  stkNextDate?: string;
+  oilNextDate?: string;
+  oilNextKm?: number;
+  oilNextHours?: number;
+}
+
 interface DashboardData {
   totalVehicles: number;
   activeVehicles: number;
-  expiredStk: number;
+  stkExpired: number;
   urgentTasks: number;
   openTasks: number;
-  byCategory: { category: string; _count: number }[];
+  byCategory: Record<string, number>;
   upcomingDeadlines: {
     vehicleId: string;
     vehicleName: string;
-    type: string;
-    date: string;
+    spz: string | null;
+    deadlineType: string;
+    deadlineDate: string;
   }[];
+  stkAlertVehicles: AlertVehicle[];
+  oilAlertVehicles: AlertVehicle[];
 }
 
 export default function VozidlaDashboardPage() {
@@ -51,62 +65,108 @@ export default function VozidlaDashboardPage() {
   if (loading) return <div className="text-gray-500">Načítání...</div>;
   if (!data) return <div className="text-red-500">Chyba při načítání dat</div>;
 
-  const TYPE_LABELS: Record<string, string> = {
-    STK: "STK",
-    OIL: "Olej",
-    SERVICE: "Servis",
-  };
-
   return (
     <>
       <PageHeader title="Dashboard vozidel" description="Přehled stavu flotily" />
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <KpiCard title="Celkem vozidel" value={data.totalVehicles} />
         <KpiCard title="Aktivní" value={data.activeVehicles} />
-        <div className={`bg-white rounded-xl border border-gray-200 p-5 ${data.expiredStk > 0 ? "ring-2 ring-red-300" : ""}`}>
+        <div className={`bg-white rounded-xl border border-gray-200 p-5 ${data.stkExpired > 0 ? "ring-2 ring-red-300" : ""}`}>
           <p className="text-sm font-medium text-gray-500">Po termínu STK</p>
-          <p className={`mt-2 text-2xl font-bold ${data.expiredStk > 0 ? "text-red-600" : "text-gray-900"}`}>
-            {data.expiredStk}
-          </p>
+          <p className={`mt-2 text-2xl font-bold ${data.stkExpired > 0 ? "text-red-600" : "text-gray-900"}`}>{data.stkExpired}</p>
         </div>
         <div className={`bg-white rounded-xl border border-gray-200 p-5 ${data.urgentTasks > 0 ? "ring-2 ring-red-300" : ""}`}>
           <p className="text-sm font-medium text-gray-500">Urgentní úkoly</p>
-          <p className={`mt-2 text-2xl font-bold ${data.urgentTasks > 0 ? "text-red-600" : "text-gray-900"}`}>
-            {data.urgentTasks}
-          </p>
+          <p className={`mt-2 text-2xl font-bold ${data.urgentTasks > 0 ? "text-red-600" : "text-gray-900"}`}>{data.urgentTasks}</p>
         </div>
         <KpiCard title="Otevřené úkoly" value={data.openTasks} />
+      </div>
+
+      {/* STK a Olej alerty */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* STK */}
+        <div className={`bg-white rounded-xl border p-5 ${data.stkAlertVehicles.length > 0 ? "border-red-200" : "border-gray-200"}`}>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            STK – akutní
+            {data.stkAlertVehicles.length > 0 && (
+              <span className="bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">{data.stkAlertVehicles.length}</span>
+            )}
+          </h2>
+          {data.stkAlertVehicles.length === 0 ? (
+            <p className="text-green-600 text-sm font-medium">Vše v pořádku</p>
+          ) : (
+            <div className="space-y-2">
+              {data.stkAlertVehicles.map((v) => {
+                const status = getDateStatus(v.stkNextDate || null);
+                return (
+                  <a key={v.id} href={`/vozidla/${v.id}`} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition">
+                    <div>
+                      <span className="font-medium text-gray-900">{v.name}</span>
+                      {v.spz && <span className="text-gray-500 ml-2 text-sm">{v.spz}</span>}
+                    </div>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
+                      {v.stkNextDate ? new Date(v.stkNextDate).toLocaleDateString("cs-CZ") : "–"} · {status.label}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Olej */}
+        <div className={`bg-white rounded-xl border p-5 ${data.oilAlertVehicles.length > 0 ? "border-orange-200" : "border-gray-200"}`}>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            Olej – akutní
+            {data.oilAlertVehicles.length > 0 && (
+              <span className="bg-orange-100 text-orange-700 text-xs font-medium px-2 py-0.5 rounded-full">{data.oilAlertVehicles.length}</span>
+            )}
+          </h2>
+          {data.oilAlertVehicles.length === 0 ? (
+            <p className="text-green-600 text-sm font-medium">Vše v pořádku</p>
+          ) : (
+            <div className="space-y-2">
+              {data.oilAlertVehicles.map((v) => {
+                const status = getDateStatus(v.oilNextDate || null);
+                return (
+                  <a key={v.id} href={`/vozidla/${v.id}`} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition">
+                    <div>
+                      <span className="font-medium text-gray-900">{v.name}</span>
+                      {v.spz && <span className="text-gray-500 ml-2 text-sm">{v.spz}</span>}
+                    </div>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
+                      {v.oilNextDate ? new Date(v.oilNextDate).toLocaleDateString("cs-CZ") : "–"} · {status.label}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Podle kategorií */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Podle kategorií</h2>
-        {data.byCategory.length === 0 ? (
-          <p className="text-gray-500 text-sm">Žádná data</p>
-        ) : (
-          <div className="space-y-3">
-            {data.byCategory.map((item) => {
-              const maxCount = Math.max(...data.byCategory.map((c) => c._count), 1);
-              const pct = Math.round((item._count / maxCount) * 100);
-              return (
-                <div key={item.category}>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="font-medium text-gray-700">{CATEGORY_LABELS[item.category] || item.category}</span>
-                    <span className="text-gray-500">{item._count}</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-3">
-                    <div
-                      className="bg-green-500 h-3 rounded-full transition-all"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
+        <div className="space-y-3">
+          {Object.entries(data.byCategory).map(([cat, count]) => {
+            const maxCount = Math.max(...Object.values(data.byCategory), 1);
+            const pct = Math.round(((count as number) / maxCount) * 100);
+            return (
+              <div key={cat}>
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span className="font-medium text-gray-700">{CATEGORY_LABELS[cat] || cat}</span>
+                  <span className="text-gray-500">{count as number}</span>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <div className="w-full bg-gray-100 rounded-full h-3">
+                  <div className="bg-green-500 h-3 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Blížící se termíny */}
@@ -120,6 +180,7 @@ export default function VozidlaDashboardPage() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Vozidlo</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase">SPZ</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Typ</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Datum</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Stav</th>
@@ -127,20 +188,17 @@ export default function VozidlaDashboardPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {data.upcomingDeadlines.map((dl, i) => {
-                  const status = getDateStatus(dl.date);
+                  const status = getDateStatus(dl.deadlineDate);
                   return (
-                    <tr key={`${dl.vehicleId}-${dl.type}-${i}`} className="hover:bg-gray-50">
+                    <tr key={`${dl.vehicleId}-${dl.deadlineType}-${i}`} className="hover:bg-gray-50">
                       <td className="px-3 py-2 text-sm">
-                        <a href={`/vozidla/${dl.vehicleId}`} className="text-green-600 hover:text-green-700 font-medium">
-                          {dl.vehicleName}
-                        </a>
+                        <a href={`/vozidla/${dl.vehicleId}`} className="text-green-600 hover:text-green-700 font-medium">{dl.vehicleName}</a>
                       </td>
-                      <td className="px-3 py-2 text-sm text-gray-700">{TYPE_LABELS[dl.type] || dl.type}</td>
-                      <td className="px-3 py-2 text-sm text-gray-700">{new Date(dl.date).toLocaleDateString("cs-CZ")}</td>
+                      <td className="px-3 py-2 text-sm text-gray-500">{dl.spz || "–"}</td>
+                      <td className="px-3 py-2 text-sm text-gray-700">{dl.deadlineType}</td>
+                      <td className="px-3 py-2 text-sm text-gray-700">{new Date(dl.deadlineDate).toLocaleDateString("cs-CZ")}</td>
                       <td className="px-3 py-2 text-sm">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
-                          {status.label}
-                        </span>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.color}`}>{status.label}</span>
                       </td>
                     </tr>
                   );
