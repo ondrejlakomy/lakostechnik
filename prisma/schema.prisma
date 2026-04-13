@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 // Hodnoty rolí: ADMIN, USER_L1, USER_L2, DRIVER
