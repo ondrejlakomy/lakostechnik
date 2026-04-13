@@ -1,0 +1,339 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// Hodnoty rolí: ADMIN, USER_L1, USER_L2, DRIVER
+// Hodnoty stavu přepravy: KONCEPT, POTVRZENO, STORNOVANO
+// Hodnoty typu pohybu: VYROBA, PRIJEM, VYDEJ, PRESUN, ODVOZ
+// Hodnoty typu skladu: MEZISKLAD, SKLAD, JINY
+
+// ==================== UZIVATELE ====================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  firstName     String    @map("first_name")
+  lastName      String    @map("last_name")
+  phone         String?
+  role          String    @default("USER_L2")
+  active        Boolean   @default(true)
+  driverId      String?   @unique @map("driver_id")
+  driver        Driver?   @relation(fields: [driverId], references: [id])
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  createdTransports  Transport[]       @relation("TransportCreatedBy")
+  updatedTransports  Transport[]       @relation("TransportUpdatedBy")
+  createdMovements   MaterialMovement[] @relation("MovementCreatedBy")
+  auditLogs          AuditLog[]
+
+  @@map("users")
+}
+
+// ==================== LOKACE ====================
+
+model Location {
+  id          String    @id @default(cuid())
+  name        String
+  code        String    @unique
+  address     String?
+  gps         String?
+  active      Boolean   @default(true)
+  note        String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  warehouses          Warehouse[]
+  transportsLoading   Transport[]  @relation("TransportLoadingLocation")
+  transportsUnloading Transport[]  @relation("TransportUnloadingLocation")
+  transportsOrigin    Transport[]  @relation("TransportOriginLocation")
+  movements           MaterialMovement[]
+
+  @@map("locations")
+}
+
+// ==================== SKLADY ====================
+
+model Warehouse {
+  id          String    @id @default(cuid())
+  name        String
+  code        String    @unique
+  type        String    @default("SKLAD")
+  locationId  String?   @map("location_id")
+  location    Location? @relation(fields: [locationId], references: [id])
+  address     String?
+  currentStock Float   @default(0) @map("current_stock")
+  unit        String    @default("PRM")
+  active      Boolean   @default(true)
+  note        String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  transportsSource      Transport[]        @relation("TransportSourceWarehouse")
+  transportsTarget      Transport[]        @relation("TransportTargetWarehouse")
+  movementsSource       MaterialMovement[] @relation("MovementSourceWarehouse")
+  movementsTarget       MaterialMovement[] @relation("MovementTargetWarehouse")
+
+  @@map("warehouses")
+}
+
+// ==================== ODBERATELE ====================
+
+model Customer {
+  id            String    @id @default(cuid())
+  name          String
+  ico           String?
+  address       String?
+  contactPerson String?   @map("contact_person")
+  phone         String?
+  email         String?
+  active        Boolean   @default(true)
+  note          String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  transports    Transport[]
+
+  @@map("customers")
+}
+
+// ==================== ELEKTRARNY ====================
+
+model PowerPlant {
+  id            String    @id @default(cuid())
+  name          String
+  address       String?
+  contactPerson String?   @map("contact_person")
+  phone         String?
+  email         String?
+  active        Boolean   @default(true)
+  note          String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  transports    Transport[]
+  weeklyPlans   PowerPlantWeeklyPlan[]
+
+  @@map("power_plants")
+}
+
+// ==================== TYDENNI PLANY ELEKTRAREN ====================
+
+model PowerPlantWeeklyPlan {
+  id            String    @id @default(cuid())
+  powerPlantId  String    @map("power_plant_id")
+  powerPlant    PowerPlant @relation(fields: [powerPlantId], references: [id])
+  weekStart     DateTime  @map("week_start")
+  targetPrm     Float     @map("target_prm")
+  note          String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@unique([powerPlantId, weekStart])
+  @@map("power_plant_weekly_plans")
+}
+
+// ==================== STEPKOVACE ====================
+
+model Chipper {
+  id              String    @id @default(cuid())
+  name            String
+  internalCode    String?   @map("internal_code")
+  serialNumber    String?   @map("serial_number")
+  active          Boolean   @default(true)
+  note            String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  transports      Transport[]
+  movements       MaterialMovement[]
+
+  @@map("chippers")
+}
+
+// ==================== RIDICI ====================
+
+model Driver {
+  id            String    @id @default(cuid())
+  firstName     String    @map("first_name")
+  lastName      String    @map("last_name")
+  phone         String?
+  code          String    @unique
+  defaultSpz    String?   @map("default_spz")
+  active        Boolean   @default(true)
+  note          String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user          User?
+  transports    Transport[]
+  vehicles      DriverVehicle[]
+
+  @@map("drivers")
+}
+
+// ==================== VOZIDLA RIDICU ====================
+
+model DriverVehicle {
+  id          String    @id @default(cuid())
+  driverId    String    @map("driver_id")
+  driver      Driver    @relation(fields: [driverId], references: [id])
+  spz         String
+  name        String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("driver_vehicles")
+}
+
+// ==================== TURNUSY ZAVOZU ====================
+
+model DeliveryShift {
+  id          String    @id @default(cuid())
+  name        String
+  dateFrom    DateTime? @map("date_from")
+  dateTo      DateTime? @map("date_to")
+  active      Boolean   @default(true)
+  closed      Boolean   @default(false)
+  note        String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  transports  Transport[]
+
+  @@map("delivery_shifts")
+}
+
+// ==================== PREPRAVY / DODAKY ====================
+
+model Transport {
+  id                  String    @id @default(cuid())
+  number              String    @unique
+  status              String    @default("KONCEPT")
+
+  deliveryShiftId     String?   @map("delivery_shift_id")
+  deliveryShift       DeliveryShift? @relation(fields: [deliveryShiftId], references: [id])
+
+  deliveryNoteNumber  String?   @map("delivery_note_number")
+  weighingTicketNumber String?  @map("weighing_ticket_number")
+  callNumber          String?   @map("call_number")
+
+  loadingPlace        String?   @map("loading_place")
+  unloadingPlace      String?   @map("unloading_place")
+
+  originLocationId    String?   @map("origin_location_id")
+  originLocation      Location? @relation("TransportOriginLocation", fields: [originLocationId], references: [id])
+
+  loadingLocationId   String?   @map("loading_location_id")
+  loadingLocation     Location? @relation("TransportLoadingLocation", fields: [loadingLocationId], references: [id])
+
+  unloadingLocationId String?   @map("unloading_location_id")
+  unloadingLocation   Location? @relation("TransportUnloadingLocation", fields: [unloadingLocationId], references: [id])
+
+  sourceWarehouseId   String?   @map("source_warehouse_id")
+  sourceWarehouse     Warehouse? @relation("TransportSourceWarehouse", fields: [sourceWarehouseId], references: [id])
+
+  targetWarehouseId   String?   @map("target_warehouse_id")
+  targetWarehouse     Warehouse? @relation("TransportTargetWarehouse", fields: [targetWarehouseId], references: [id])
+
+  powerPlantId        String?   @map("power_plant_id")
+  powerPlant          PowerPlant? @relation(fields: [powerPlantId], references: [id])
+
+  customerId          String?   @map("customer_id")
+  customer            Customer? @relation(fields: [customerId], references: [id])
+
+  chipperName         String?   @map("chipper_name")
+  chipperId           String?   @map("chipper_id")
+  chipper             Chipper?  @relation(fields: [chipperId], references: [id])
+
+  driverId            String?   @map("driver_id")
+  driver              Driver?   @relation(fields: [driverId], references: [id])
+
+  vehicleSpz          String?   @map("vehicle_spz")
+  kilometers          Float?
+  nettoWeight         Float?    @map("netto_weight")
+  prm                 Float?
+  unit                String?   @default("t")
+  note                String?
+
+  createdById         String?   @map("created_by_id")
+  createdBy           User?     @relation("TransportCreatedBy", fields: [createdById], references: [id])
+
+  updatedById         String?   @map("updated_by_id")
+  updatedBy           User?     @relation("TransportUpdatedBy", fields: [updatedById], references: [id])
+
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  @@map("transports")
+}
+
+// ==================== POHYBY MATERIALU ====================
+
+model MaterialMovement {
+  id                String    @id @default(cuid())
+  type              String
+  date              DateTime  @default(now())
+
+  locationId        String?   @map("location_id")
+  location          Location? @relation(fields: [locationId], references: [id])
+
+  sourceWarehouseId String?   @map("source_warehouse_id")
+  sourceWarehouse   Warehouse? @relation("MovementSourceWarehouse", fields: [sourceWarehouseId], references: [id])
+
+  targetWarehouseId String?   @map("target_warehouse_id")
+  targetWarehouse   Warehouse? @relation("MovementTargetWarehouse", fields: [targetWarehouseId], references: [id])
+
+  chipperId         String?   @map("chipper_id")
+  chipper           Chipper?  @relation(fields: [chipperId], references: [id])
+
+  quantity          Float
+  unit              String    @default("t")
+  note              String?
+
+  createdById       String?   @map("created_by_id")
+  createdBy         User?     @relation("MovementCreatedBy", fields: [createdById], references: [id])
+
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@map("material_movements")
+}
+
+// ==================== AUDIT LOG ====================
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  entity      String
+  entityId    String    @map("entity_id")
+  action      String
+  changes     String?
+  userId      String?   @map("user_id")
+  user        User?     @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}
+
+// ==================== NASTAVENI CISELNYCH RAD ====================
+
+model NumberSequence {
+  id          String    @id @default(cuid())
+  prefix      String
+  year        Int
+  lastNumber  Int       @default(0) @map("last_number")
+  format      String    @default("{PREFIX}-{SEQ}-{YEAR}")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@unique([prefix, year])
+  @@map("number_sequences")
+}
