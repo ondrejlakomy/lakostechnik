@@ -78,6 +78,8 @@ export function hasPermission(role: Role, permission: Permission): boolean {
 export function getMenuItems(role: Role) {
   const items = [
     { href: "/dashboard", label: "Dashboard", permission: "view_dashboard" as Permission },
+    { href: "/vozidla", label: "Vozidla", permission: "manage_locations" as Permission },
+    { href: "/vozidla/dashboard", label: "Dashboard vozidel", permission: "manage_locations" as Permission },
     { href: "/prepravy", label: "Přepravy", permission: "create_transport" as Permission },
     { href: "/pohyby", label: "Pohyby materiálu", permission: "manage_movements" as Permission },
     { href: "/lokace", label: "Lokace", permission: "manage_locations" as Permission },

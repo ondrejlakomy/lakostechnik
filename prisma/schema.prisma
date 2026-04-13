@@ -33,6 +33,8 @@ model User {
   updatedTransports  Transport[]       @relation("TransportUpdatedBy")
   createdMovements   MaterialMovement[] @relation("MovementCreatedBy")
   auditLogs          AuditLog[]
+  createdServiceRecords VehicleServiceRecord[] @relation("ServiceRecordCreatedBy")
+  createdVehicleTasks   VehicleTask[]          @relation("TaskCreatedBy")
 
   @@map("users")
 }
@@ -172,9 +174,10 @@ model Driver {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  user          User?
-  transports    Transport[]
-  vehicles      DriverVehicle[]
+  user              User?
+  transports        Transport[]
+  vehicles          DriverVehicle[]
+  assignedVehicles  Vehicle[]
 
   @@map("drivers")
 }
@@ -336,4 +339,109 @@ model NumberSequence {
 
   @@unique([prefix, year])
   @@map("number_sequences")
+}
+
+// ==================== VOZIDLA A TECHNIKA ====================
+
+model Vehicle {
+  id                  String    @id @default(cuid())
+  name                String
+  category            String    // OSOBNI, NAKLADNI, PRIPOJNE, TRAKTOR, NAKLADAC
+  brand               String?
+  model               String?
+  variant             String?
+  nickname            String?
+  yearOfManufacture   Int?      @map("year_of_manufacture")
+  dateOfPurchase      DateTime? @map("date_of_purchase")
+  purchasePrice       Float?    @map("purchase_price")
+  currentValue        Float?    @map("current_value")
+  spz                 String?
+  vin                 String?
+  color               String?
+  odometerKm          Float?    @map("odometer_km")
+  engineHours         Float?    @map("engine_hours")
+  transmission        String?
+  engine              String?
+  payload             Float?
+  grossWeight         Float?    @map("gross_weight")
+  operatingWeight     Float?    @map("operating_weight")
+  tireSize            String?   @map("tire_size")
+  tireType            String?   @map("tire_type")   // ZIMNI, LETNI, CELOROCNI, PRACOVNI
+  tireCondition       Int?      @map("tire_condition") // 0-100 %
+  axleCount           Int?      @map("axle_count")
+  assignedDriverId    String?   @map("assigned_driver_id")
+  assignedDriver      Driver?   @relation(fields: [assignedDriverId], references: [id])
+  active              Boolean   @default(true)
+  note                String?
+
+  // Servisní termíny
+  stkDate             DateTime? @map("stk_date")
+  stkNextDate         DateTime? @map("stk_next_date")
+  oilChangeDate       DateTime? @map("oil_change_date")
+  oilChangeKm         Float?    @map("oil_change_km")
+  oilChangeHours      Float?    @map("oil_change_hours")
+  oilNextKm           Float?    @map("oil_next_km")
+  oilNextDate         DateTime? @map("oil_next_date")
+  oilNextHours        Float?    @map("oil_next_hours")
+  filterChangeDate    DateTime? @map("filter_change_date")
+  filterNextDate      DateTime? @map("filter_next_date")
+  lastServiceDate     DateTime? @map("last_service_date")
+  lastServiceKm       Float?    @map("last_service_km")
+  nextServiceDate     DateTime? @map("next_service_date")
+  nextServiceKm       Float?    @map("next_service_km")
+
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  serviceRecords      VehicleServiceRecord[]
+  tasks               VehicleTask[]
+
+  @@map("vehicles")
+}
+
+// ==================== SERVISNI ZAZNAMY ====================
+
+model VehicleServiceRecord {
+  id            String    @id @default(cuid())
+  vehicleId     String    @map("vehicle_id")
+  vehicle       Vehicle   @relation(fields: [vehicleId], references: [id])
+  date          DateTime
+  type          String    // OLEJ, OLEJ_FILTRY, STK, PNEUSERVIS, OPRAVA, BEZNY_SERVIS, MIMORADNY, DETAILING, KLIMATIZACE, EOBD, KAROSERIE, JINY
+  description   String?
+  odometerKm    Float?    @map("odometer_km")
+  engineHours   Float?    @map("engine_hours")
+  cost          Float?
+  supplier      String?
+  note          String?
+  createdById   String?   @map("created_by_id")
+  createdBy     User?     @relation("ServiceRecordCreatedBy", fields: [createdById], references: [id])
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("vehicle_service_records")
+}
+
+// ==================== SERVISNI UKOLY ====================
+
+model VehicleTask {
+  id              String    @id @default(cuid())
+  vehicleId       String    @map("vehicle_id")
+  vehicle         Vehicle   @relation(fields: [vehicleId], references: [id])
+  title           String
+  type            String?
+  priority        String    @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  status          String    @default("OTEVRENY") // OTEVRENY, V_RESENI, HOTOVO, ZRUSENO
+  dueDate         DateTime? @map("due_date")
+  dueDateKm       Float?    @map("due_date_km")
+  dueDateHours    Float?    @map("due_date_hours")
+  description     String?
+  internalNote    String?   @map("internal_note")
+  assignedPerson  String?   @map("assigned_person")
+  completedAt     DateTime? @map("completed_at")
+  createdById     String?   @map("created_by_id")
+  createdBy       User?     @relation("TaskCreatedBy", fields: [createdById], references: [id])
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("vehicle_tasks")
 }

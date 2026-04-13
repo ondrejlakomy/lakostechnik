@@ -9,6 +9,7 @@ import { getMenuItems } from "@/lib/permissions";
 import {
   HomeIcon,
   TruckIcon,
+  WrenchIcon,
   ArrowsRightLeftIcon,
   MapPinIcon,
   BuildingOffice2Icon,
@@ -26,6 +27,8 @@ import {
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "/dashboard": HomeIcon,
+  "/vozidla": WrenchIcon,
+  "/vozidla/dashboard": ChartBarSquareIcon,
   "/prepravy": TruckIcon,
   "/pohyby": ArrowsRightLeftIcon,
   "/lokace": MapPinIcon,
