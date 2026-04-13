@@ -49,7 +49,6 @@ async function main() {
       tireSize: "225/50 R18 95 W", tireType: "ZIMNI", tireCondition: 100,
       stkNextDate: new Date("2026-06-01"),
       oilChangeDate: new Date("2025-06-01"), oilNextDate: new Date("2025-06-01"),
-      grossWeight: 648,
       note: "Výměna kabinového filtru, Detailing před svátky?",
     },
     {
@@ -74,7 +73,6 @@ async function main() {
       tireSize: "235/50 R19 99 V", tireType: "ZIMNI", tireCondition: 80,
       stkNextDate: new Date("2027-06-01"),
       oilNextDate: new Date("2024-10-01"),
-      grossWeight: 643,
     },
     {
       name: "Mitsubishi Pajero",
@@ -86,7 +84,6 @@ async function main() {
       tireSize: "275/70 R16 112 S", tireType: "ZIMNI", tireCondition: 80,
       stkNextDate: new Date("2027-10-01"),
       oilChangeDate: new Date("2025-06-01"), oilNextDate: new Date("2025-06-01"),
-      grossWeight: 495,
     },
     {
       name: "Land Rover Defender",
@@ -98,7 +95,6 @@ async function main() {
       tireSize: "255/65 R19 114 H", tireType: "CELOROCNI", tireCondition: 70,
       stkNextDate: new Date("2027-06-01"),
       oilChangeDate: new Date("2025-06-03"), oilNextDate: new Date("2025-06-03"),
-      grossWeight: 680,
       note: "Oprava ochranné folie (levé zadní kolo)",
     },
     {
@@ -135,7 +131,6 @@ async function main() {
       tireSize: "205/65 R16C 107 T", tireType: "ZIMNI", tireCondition: 100,
       stkNextDate: new Date("2026-09-01"),
       oilChangeDate: new Date("2025-01-31"), oilNextDate: new Date("2025-01-31"),
-      grossWeight: 1038,
     },
     {
       name: "VW Caravelle 4MOTION",
@@ -146,7 +141,6 @@ async function main() {
       operatingWeight: 1375, grossWeight: 2220,
       tireSize: "215/60 R17C 109 H", tireType: "ZIMNI", tireCondition: 45,
       stkNextDate: new Date("2027-10-01"),
-      grossWeight: 638,
       note: "Soláry, Olej (km) ?",
     },
     {
@@ -158,7 +152,6 @@ async function main() {
       operatingWeight: 2996, grossWeight: 2000,
       tireSize: "235/65 R16C 115 R", tireType: "CELOROCNI", tireCondition: 85,
       stkNextDate: new Date("2027-04-01"),
-      grossWeight: 504,
       note: "Klimatizace, Navrhnou design",
     },
   ];
