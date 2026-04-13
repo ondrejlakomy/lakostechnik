@@ -5,11 +5,11 @@ import PageHeader from "@/components/ui/PageHeader";
 import KpiCard from "@/components/ui/KpiCard";
 
 const CATEGORY_LABELS: Record<string, string> = {
-  OSOBNI: "Osobn\u00ed v\u016fz",
-  NAKLADNI: "N\u00e1kladn\u00ed",
-  PRIPOJNE: "P\u0159\u00edpojn\u00e9 vozidlo",
+  OSOBNI: "Osobní vůz",
+  NAKLADNI: "Nákladní",
+  PRIPOJNE: "Přípojné vozidlo",
   TRAKTOR: "Traktor",
-  NAKLADAC: "Naklada\u010d",
+  NAKLADAC: "Nakladač",
 };
 
 function getDateStatus(date: string | null): { color: string; label: string } {
@@ -17,8 +17,8 @@ function getDateStatus(date: string | null): { color: string; label: string } {
   const d = new Date(date);
   const now = new Date();
   const diff = (d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-  if (diff < 0) return { color: "bg-red-100 text-red-700", label: "Po term\u00ednu" };
-  if (diff <= 30) return { color: "bg-yellow-100 text-yellow-700", label: `${Math.ceil(diff)} dn\u00ed` };
+  if (diff < 0) return { color: "bg-red-100 text-red-700", label: "Po termínu" };
+  if (diff <= 30) return { color: "bg-yellow-100 text-yellow-700", label: `${Math.ceil(diff)} dní` };
   return { color: "bg-green-100 text-green-700", label: d.toLocaleDateString("cs-CZ") };
 }
 
@@ -48,8 +48,8 @@ export default function VozidlaDashboardPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="text-gray-500">Na\u010d\u00edt\u00e1n\u00ed...</div>;
-  if (!data) return <div className="text-red-500">Chyba p\u0159i na\u010d\u00edt\u00e1n\u00ed dat</div>;
+  if (loading) return <div className="text-gray-500">Načítání...</div>;
+  if (!data) return <div className="text-red-500">Chyba při načítání dat</div>;
 
   const TYPE_LABELS: Record<string, string> = {
     STK: "STK",
@@ -59,32 +59,32 @@ export default function VozidlaDashboardPage() {
 
   return (
     <>
-      <PageHeader title="Dashboard vozidel" description="P\u0159ehled stavu flotily" />
+      <PageHeader title="Dashboard vozidel" description="Přehled stavu flotily" />
 
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <KpiCard title="Celkem vozidel" value={data.totalVehicles} />
-        <KpiCard title="Aktivn\u00ed" value={data.activeVehicles} />
+        <KpiCard title="Aktivní" value={data.activeVehicles} />
         <div className={`bg-white rounded-xl border border-gray-200 p-5 ${data.expiredStk > 0 ? "ring-2 ring-red-300" : ""}`}>
-          <p className="text-sm font-medium text-gray-500">Po term\u00ednu STK</p>
+          <p className="text-sm font-medium text-gray-500">Po termínu STK</p>
           <p className={`mt-2 text-2xl font-bold ${data.expiredStk > 0 ? "text-red-600" : "text-gray-900"}`}>
             {data.expiredStk}
           </p>
         </div>
         <div className={`bg-white rounded-xl border border-gray-200 p-5 ${data.urgentTasks > 0 ? "ring-2 ring-red-300" : ""}`}>
-          <p className="text-sm font-medium text-gray-500">Urgentn\u00ed \u00fakoly</p>
+          <p className="text-sm font-medium text-gray-500">Urgentní úkoly</p>
           <p className={`mt-2 text-2xl font-bold ${data.urgentTasks > 0 ? "text-red-600" : "text-gray-900"}`}>
             {data.urgentTasks}
           </p>
         </div>
-        <KpiCard title="Otev\u0159en\u00e9 \u00fakoly" value={data.openTasks} />
+        <KpiCard title="Otevřené úkoly" value={data.openTasks} />
       </div>
 
-      {/* Podle kategori\u00ed */}
+      {/* Podle kategorií */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Podle kategori\u00ed</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Podle kategorií</h2>
         {data.byCategory.length === 0 ? (
-          <p className="text-gray-500 text-sm">\u017d\u00e1dn\u00e1 data</p>
+          <p className="text-gray-500 text-sm">Žádná data</p>
         ) : (
           <div className="space-y-3">
             {data.byCategory.map((item) => {
@@ -109,11 +109,11 @@ export default function VozidlaDashboardPage() {
         )}
       </div>
 
-      {/* Bl\u00ed\u017e\u00edc\u00ed se term\u00edny */}
+      {/* Blížící se termíny */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Bl\u00ed\u017e\u00edc\u00ed se term\u00edny</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Blížící se termíny</h2>
         {data.upcomingDeadlines.length === 0 ? (
-          <p className="text-gray-500 text-sm">\u017d\u00e1dn\u00e9 bl\u00ed\u017e\u00edc\u00ed se term\u00edny</p>
+          <p className="text-gray-500 text-sm">Žádné blížící se termíny</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">

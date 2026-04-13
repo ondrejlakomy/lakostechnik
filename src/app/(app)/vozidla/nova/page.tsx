@@ -7,17 +7,17 @@ import FormField from "@/components/ui/FormField";
 import toast from "react-hot-toast";
 
 const CATEGORY_OPTIONS = [
-  { value: "OSOBNI", label: "Osobn\u00ed v\u016fz" },
-  { value: "NAKLADNI", label: "N\u00e1kladn\u00ed" },
-  { value: "PRIPOJNE", label: "P\u0159\u00edpojn\u00e9 vozidlo" },
+  { value: "OSOBNI", label: "Osobní vůz" },
+  { value: "NAKLADNI", label: "Nákladní" },
+  { value: "PRIPOJNE", label: "Přípojné vozidlo" },
   { value: "TRAKTOR", label: "Traktor" },
-  { value: "NAKLADAC", label: "Naklada\u010d" },
+  { value: "NAKLADAC", label: "Nakladač" },
 ];
 
 const TIRE_TYPE_OPTIONS = [
-  { value: "LETNI", label: "Letn\u00ed" },
-  { value: "ZIMNI", label: "Zimn\u00ed" },
-  { value: "CELOROCNI", label: "Celoro\u010dn\u00ed" },
+  { value: "LETNI", label: "Letní" },
+  { value: "ZIMNI", label: "Zimní" },
+  { value: "CELOROCNI", label: "Celoroční" },
 ];
 
 interface Driver {
@@ -112,11 +112,11 @@ export default function NoveVozidloPage() {
       body: JSON.stringify(payload),
     });
     if (res.ok) {
-      toast.success("Vozidlo vytvo\u0159eno");
+      toast.success("Vozidlo vytvořeno");
       router.push("/vozidla");
     } else {
       const data = await res.json();
-      toast.error(data.error || "Chyba p\u0159i ukl\u00e1d\u00e1n\u00ed");
+      toast.error(data.error || "Chyba při ukládání");
     }
     setSaving(false);
   };
@@ -128,42 +128,42 @@ export default function NoveVozidloPage() {
 
   return (
     <>
-      <PageHeader title="Nov\u00e9 vozidlo" />
+      <PageHeader title="Nové vozidlo" />
       <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
-        {/* Z\u00e1kladn\u00ed \u00fadaje */}
+        {/* Základní údaje */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Z\u00e1kladn\u00ed \u00fadaje</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Základní údaje</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="N\u00e1zev" name="name" value={form.name} onChange={handleChange} required placeholder="N\u00e1zev vozidla" />
+            <FormField label="Název" name="name" value={form.name} onChange={handleChange} required placeholder="Název vozidla" />
             <FormField label="Kategorie" name="category" value={form.category} onChange={handleChange} required options={CATEGORY_OPTIONS} />
-            <FormField label="Zna\u010dka" name="brand" value={form.brand} onChange={handleChange} placeholder="Nap\u0159. Volvo" />
-            <FormField label="Model" name="model" value={form.model} onChange={handleChange} placeholder="Nap\u0159. FH16" />
+            <FormField label="Značka" name="brand" value={form.brand} onChange={handleChange} placeholder="Např. Volvo" />
+            <FormField label="Model" name="model" value={form.model} onChange={handleChange} placeholder="Např. FH16" />
             <FormField label="Varianta" name="variant" value={form.variant} onChange={handleChange} />
-            <FormField label="P\u0159ezd\u00edvka" name="nickname" value={form.nickname} onChange={handleChange} />
-            <FormField label="Rok v\u00fdroby" name="yearOfManufacture" type="number" value={form.yearOfManufacture} onChange={handleChange} min="1900" />
-            <FormField label="SPZ" name="spz" value={form.spz} onChange={handleChange} placeholder="Nap\u0159. 1AB 2345" />
+            <FormField label="Přezdívka" name="nickname" value={form.nickname} onChange={handleChange} />
+            <FormField label="Rok výroby" name="yearOfManufacture" type="number" value={form.yearOfManufacture} onChange={handleChange} min="1900" />
+            <FormField label="SPZ" name="spz" value={form.spz} onChange={handleChange} placeholder="Např. 1AB 2345" />
             <FormField label="VIN" name="vin" value={form.vin} onChange={handleChange} />
             <FormField label="Barva" name="color" value={form.color} onChange={handleChange} />
           </div>
           <div className="flex items-center gap-2 pt-2">
             <input type="checkbox" id="active" name="active" checked={form.active as unknown as boolean} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500" />
-            <label htmlFor="active" className="text-sm text-gray-700">Aktivn\u00ed</label>
+            <label htmlFor="active" className="text-sm text-gray-700">Aktivní</label>
           </div>
         </div>
 
-        {/* Technick\u00e9 \u00fadaje */}
+        {/* Technické údaje */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Technick\u00e9 \u00fadaje</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Technické údaje</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField label="Motor" name="engine" value={form.engine} onChange={handleChange} />
-            <FormField label="P\u0159evodovka" name="transmission" value={form.transmission} onChange={handleChange} />
-            <FormField label="U\u017eite\u010dn\u00e1 hmotnost (kg)" name="payload" type="number" value={form.payload} onChange={handleChange} min="0" />
-            <FormField label="Celkov\u00e1 hmotnost (kg)" name="grossWeight" type="number" value={form.grossWeight} onChange={handleChange} min="0" />
-            <FormField label="Provozn\u00ed hmotnost (kg)" name="operatingWeight" type="number" value={form.operatingWeight} onChange={handleChange} min="0" />
+            <FormField label="Převodovka" name="transmission" value={form.transmission} onChange={handleChange} />
+            <FormField label="Užitečná hmotnost (kg)" name="payload" type="number" value={form.payload} onChange={handleChange} min="0" />
+            <FormField label="Celková hmotnost (kg)" name="grossWeight" type="number" value={form.grossWeight} onChange={handleChange} min="0" />
+            <FormField label="Provozní hmotnost (kg)" name="operatingWeight" type="number" value={form.operatingWeight} onChange={handleChange} min="0" />
             {showAxle && (
-              <FormField label="Po\u010det n\u00e1prav" name="axleCount" type="number" value={form.axleCount} onChange={handleChange} min="1" />
+              <FormField label="Počet náprav" name="axleCount" type="number" value={form.axleCount} onChange={handleChange} min="1" />
             )}
-            <FormField label="Rozm\u011br pneumatik" name="tireSize" value={form.tireSize} onChange={handleChange} />
+            <FormField label="Rozměr pneumatik" name="tireSize" value={form.tireSize} onChange={handleChange} />
             <FormField label="Typ pneumatik" name="tireType" value={form.tireType} onChange={handleChange} options={TIRE_TYPE_OPTIONS} />
             <div>
               <label htmlFor="tireCondition" className="block text-sm font-medium text-gray-700 mb-1">
@@ -183,9 +183,9 @@ export default function NoveVozidloPage() {
           </div>
         </div>
 
-        {/* Provozn\u00ed \u00fadaje */}
+        {/* Provozní údaje */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Provozn\u00ed \u00fadaje</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Provozní údaje</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {showKm && (
               <FormField label="Stav tachometru (km)" name="odometerKm" type="number" value={form.odometerKm} onChange={handleChange} min="0" />
@@ -194,7 +194,7 @@ export default function NoveVozidloPage() {
               <FormField label="Motohodiny" name="engineHours" type="number" value={form.engineHours} onChange={handleChange} min="0" />
             )}
             <FormField
-              label="P\u0159i\u0159azen\u00fd \u0159idi\u010d"
+              label="Přiřazený řidič"
               name="assignedDriverId"
               value={form.assignedDriverId}
               onChange={handleChange}
@@ -203,30 +203,30 @@ export default function NoveVozidloPage() {
           </div>
         </div>
 
-        {/* Servisn\u00ed term\u00edny */}
+        {/* Servisní termíny */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Servisn\u00ed term\u00edny</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Servisní termíny</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField label="P\u0159\u00ed\u0161t\u00ed STK" name="stkNextDate" type="date" value={form.stkNextDate} onChange={handleChange} />
-            <FormField label="P\u0159\u00ed\u0161t\u00ed v\u00fdm\u011bna oleje (datum)" name="oilNextDate" type="date" value={form.oilNextDate} onChange={handleChange} />
-            <FormField label="P\u0159\u00ed\u0161t\u00ed v\u00fdm\u011bna oleje (km)" name="oilNextKm" type="number" value={form.oilNextKm} onChange={handleChange} min="0" />
-            <FormField label="P\u0159\u00ed\u0161t\u00ed servis (datum)" name="nextServiceDate" type="date" value={form.nextServiceDate} onChange={handleChange} />
-            <FormField label="P\u0159\u00ed\u0161t\u00ed servis (km)" name="nextServiceKm" type="number" value={form.nextServiceKm} onChange={handleChange} min="0" />
+            <FormField label="Příští STK" name="stkNextDate" type="date" value={form.stkNextDate} onChange={handleChange} />
+            <FormField label="Příští výměna oleje (datum)" name="oilNextDate" type="date" value={form.oilNextDate} onChange={handleChange} />
+            <FormField label="Příští výměna oleje (km)" name="oilNextKm" type="number" value={form.oilNextKm} onChange={handleChange} min="0" />
+            <FormField label="Příští servis (datum)" name="nextServiceDate" type="date" value={form.nextServiceDate} onChange={handleChange} />
+            <FormField label="Příští servis (km)" name="nextServiceKm" type="number" value={form.nextServiceKm} onChange={handleChange} min="0" />
           </div>
         </div>
 
-        {/* Pozn\u00e1mka */}
+        {/* Poznámka */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">Pozn\u00e1mka</h2>
-          <FormField label="Pozn\u00e1mka" name="note" value={form.note} onChange={handleChange} textarea />
+          <h2 className="text-lg font-semibold text-gray-900">Poznámka</h2>
+          <FormField label="Poznámka" name="note" value={form.note} onChange={handleChange} textarea />
         </div>
 
         <div className="flex gap-3 pb-8">
           <button type="submit" disabled={saving} className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition disabled:opacity-50">
-            {saving ? "Ukl\u00e1d\u00e1m..." : "Ulo\u017eit"}
+            {saving ? "Ukládám..." : "Uložit"}
           </button>
           <button type="button" onClick={() => router.push("/vozidla")} className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition">
-            Zru\u0161it
+            Zrušit
           </button>
         </div>
       </form>
