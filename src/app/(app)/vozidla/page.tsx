@@ -140,6 +140,7 @@ export default function VozidlaPage() {
                   const oil = getDateStatus(v.oilNextDate);
                   const openTasks = v.openTaskCount ?? v._count?.tasks ?? 0;
                   const showKm = ["OSOBNI", "NAKLADNI"].includes(v.category);
+                  const hasTachograph = ["NAKLADNI", "TRAKTOR", "NAKLADAC"].includes(v.category);
                   return (
                     <tr key={v.id} className="hover:bg-gray-50 transition">
                       <td className="px-4 py-3 text-sm">
@@ -172,14 +173,14 @@ export default function VozidlaPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {(() => { const s = getDateStatus(v.tachographDownloadNextDate); return (
+                        {hasTachograph ? (() => { const s = getDateStatus(v.tachographDownloadNextDate); return (
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${s.color}`}>{s.label}</span>
-                        ); })()}
+                        ); })() : <span className="text-gray-300">–</span>}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {(() => { const s = getDateStatus(v.tachographRevisionNextDate); return (
+                        {hasTachograph ? (() => { const s = getDateStatus(v.tachographRevisionNextDate); return (
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${s.color}`}>{s.label}</span>
-                        ); })()}
+                        ); })() : <span className="text-gray-300">–</span>}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         {openTasks > 0 ? (

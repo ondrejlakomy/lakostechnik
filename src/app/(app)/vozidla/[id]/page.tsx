@@ -354,40 +354,44 @@ export default function VozidloDetailPage() {
             <p className="text-xs mt-1 opacity-75">{new Date(vehicle.nextServiceDate).toLocaleDateString("cs-CZ")}</p>
           )}
         </div>
-        <div className={`rounded-xl p-4 ${tachDl.color}`}>
-          <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Stažení tach. <span className="font-normal">(3 měs.)</span></p>
-          <p className="text-lg font-bold mt-1">{tachDl.label}</p>
-          {vehicle.tachographDownloadNextDate && (
-            <p className="text-xs mt-1 opacity-75">{new Date(vehicle.tachographDownloadNextDate).toLocaleDateString("cs-CZ")}</p>
-          )}
-          <div className="flex gap-1 mt-2 flex-wrap">
+        {["NAKLADNI", "TRAKTOR", "NAKLADAC"].includes(vehicle.category) && (
+          <div className={`rounded-xl p-4 ${tachDl.color}`}>
+            <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Stažení tach. <span className="font-normal">(3 měs.)</span></p>
+            <p className="text-lg font-bold mt-1">{tachDl.label}</p>
             {vehicle.tachographDownloadNextDate && (
-              <button onClick={() => handleTachographDone("download")} className="px-2 py-1 bg-white/80 hover:bg-white text-xs font-medium rounded-lg transition">
-                Staženo
-              </button>
+              <p className="text-xs mt-1 opacity-75">{new Date(vehicle.tachographDownloadNextDate).toLocaleDateString("cs-CZ")}</p>
             )}
-            <button onClick={() => { setEditingTach("download"); setTachDate(vehicle.tachographDownloadNextDate ? new Date(vehicle.tachographDownloadNextDate).toISOString().split("T")[0] : ""); }} className="px-2 py-1 bg-white/50 hover:bg-white/80 text-xs rounded-lg transition">
-              Nastavit
-            </button>
+            <div className="flex gap-1 mt-2 flex-wrap">
+              {vehicle.tachographDownloadNextDate && (
+                <button onClick={() => handleTachographDone("download")} className="px-2 py-1 bg-white/80 hover:bg-white text-xs font-medium rounded-lg transition">
+                  Staženo
+                </button>
+              )}
+              <button onClick={() => { setEditingTach("download"); setTachDate(vehicle.tachographDownloadNextDate ? new Date(vehicle.tachographDownloadNextDate).toISOString().split("T")[0] : ""); }} className="px-2 py-1 bg-white/50 hover:bg-white/80 text-xs rounded-lg transition">
+                Nastavit
+              </button>
+            </div>
           </div>
-        </div>
-        <div className={`rounded-xl p-4 ${tachRev.color}`}>
-          <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Revize tach. <span className="font-normal">(24 měs.)</span></p>
-          <p className="text-lg font-bold mt-1">{tachRev.label}</p>
-          {vehicle.tachographRevisionNextDate && (
-            <p className="text-xs mt-1 opacity-75">{new Date(vehicle.tachographRevisionNextDate).toLocaleDateString("cs-CZ")}</p>
-          )}
-          <div className="flex gap-1 mt-2 flex-wrap">
+        )}
+        {["NAKLADNI", "TRAKTOR", "NAKLADAC"].includes(vehicle.category) && (
+          <div className={`rounded-xl p-4 ${tachRev.color}`}>
+            <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Revize tach. <span className="font-normal">(24 měs.)</span></p>
+            <p className="text-lg font-bold mt-1">{tachRev.label}</p>
             {vehicle.tachographRevisionNextDate && (
-              <button onClick={() => handleTachographDone("revision")} className="px-2 py-1 bg-white/80 hover:bg-white text-xs font-medium rounded-lg transition">
-                Provedeno
-              </button>
+              <p className="text-xs mt-1 opacity-75">{new Date(vehicle.tachographRevisionNextDate).toLocaleDateString("cs-CZ")}</p>
             )}
-            <button onClick={() => { setEditingTach("revision"); setTachDate(vehicle.tachographRevisionNextDate ? new Date(vehicle.tachographRevisionNextDate).toISOString().split("T")[0] : ""); }} className="px-2 py-1 bg-white/50 hover:bg-white/80 text-xs rounded-lg transition">
-              Nastavit
-            </button>
+            <div className="flex gap-1 mt-2 flex-wrap">
+              {vehicle.tachographRevisionNextDate && (
+                <button onClick={() => handleTachographDone("revision")} className="px-2 py-1 bg-white/80 hover:bg-white text-xs font-medium rounded-lg transition">
+                  Provedeno
+                </button>
+              )}
+              <button onClick={() => { setEditingTach("revision"); setTachDate(vehicle.tachographRevisionNextDate ? new Date(vehicle.tachographRevisionNextDate).toISOString().split("T")[0] : ""); }} className="px-2 py-1 bg-white/50 hover:bg-white/80 text-xs rounded-lg transition">
+                Nastavit
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Dialog pro nastavení tachografu */}
