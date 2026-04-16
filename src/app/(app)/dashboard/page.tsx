@@ -104,9 +104,10 @@ export default function DashboardPage() {
         <KpiCard title="PRM celkem" value={data.totalPrm.toFixed(1)} />
       </div>
 
-      {/* Vozidla – kritické termíny */}
+      {/* Kritické termíny + Plány elektráren vedle sebe */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {data.vehicleCritical && data.vehicleCritical.length > 0 && (
-        <div className="bg-white rounded-xl border border-red-200 p-5 lg:w-1/2">
+        <div className="bg-white rounded-xl border border-red-200 p-5">
           <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
             Vozidla – kritické termíny
             <span className="bg-red-100 text-red-700 text-xs font-medium px-2.5 py-0.5 rounded-full">{data.vehicleCritical.length}</span>
@@ -155,9 +156,9 @@ export default function DashboardPage() {
       )}
 
       {/* Týdenní plány elektráren */}
-      {data.weeklyPlans && data.weeklyPlans.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Plnění týdenních plánů (tento týden)</h2>
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">Plnění elektráren (tento týden)</h2>
+        {data.weeklyPlans && data.weeklyPlans.length > 0 ? (
           <div className="space-y-4">
             {data.weeklyPlans.map((plan) => {
               const color = plan.percentage >= 100 ? "bg-green-500" : plan.percentage >= 70 ? "bg-yellow-500" : plan.percentage >= 40 ? "bg-orange-500" : "bg-red-500";
@@ -180,8 +181,11 @@ export default function DashboardPage() {
               );
             })}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-gray-500">Žádné plány na tento týden. <a href="/elektrarny/plany" className="text-green-600 hover:text-green-700 font-medium">Nastavit plán</a></p>
+        )}
+      </div>
+      </div>
 
       {/* Zásoby na skladech */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
