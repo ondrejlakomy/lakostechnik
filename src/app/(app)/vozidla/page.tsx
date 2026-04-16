@@ -34,6 +34,8 @@ interface Vehicle {
   engineHours: number | null;
   stkNextDate: string | null;
   oilNextDate: string | null;
+  tachographDownloadNextDate: string | null;
+  tachographRevisionNextDate: string | null;
   active: boolean;
   assignedDriver?: { name: string } | null;
   _count?: { tasks: number };
@@ -125,6 +127,8 @@ export default function VozidlaPage() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Km / Mth</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">STK</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Olej</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stažení tach.</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Revize tach.</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Úkoly</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Řidič</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stav</th>
@@ -166,6 +170,16 @@ export default function VozidlaPage() {
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${oil.color}`}>
                           {oil.label}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {(() => { const s = getDateStatus(v.tachographDownloadNextDate); return (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${s.color}`}>{s.label}</span>
+                        ); })()}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {(() => { const s = getDateStatus(v.tachographRevisionNextDate); return (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${s.color}`}>{s.label}</span>
+                        ); })()}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         {openTasks > 0 ? (

@@ -48,7 +48,12 @@ export async function GET(req: Request) {
     orderBy: { name: "asc" },
   });
 
-  return jsonResponse(vehicles);
+  const result = vehicles.map((v) => ({
+    ...v,
+    openTaskCount: v.tasks.length,
+  }));
+
+  return jsonResponse(result);
 }
 
 export async function POST(req: Request) {

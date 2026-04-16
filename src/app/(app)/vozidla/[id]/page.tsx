@@ -122,6 +122,10 @@ interface Vehicle {
   oilNextKm: number | null;
   nextServiceDate: string | null;
   nextServiceKm: number | null;
+  tachographDownloadDate: string | null;
+  tachographDownloadNextDate: string | null;
+  tachographRevisionDate: string | null;
+  tachographRevisionNextDate: string | null;
   note: string | null;
   serviceRecords: ServiceRecord[];
   tasks: Task[];
@@ -240,6 +244,26 @@ export default function VozidloDetailPage() {
   const stk = getDateStatus(vehicle.stkNextDate);
   const oil = getDateStatus(vehicle.oilNextDate);
   const srv = getDateStatus(vehicle.nextServiceDate);
+  const tachDl = getDateStatus(vehicle.tachographDownloadNextDate);
+  const tachRev = getDateStatus(vehicle.tachographRevisionNextDate);
+
+  const handleTachographDone = async (type: "download" | "revision") => {
+    const now = new Date();
+    const nextDate = new Date(now);
+    nextDate.setMonth(nextDate.getMonth() + (type === "download" ? 3 : 24));
+    const body = type === "download"
+      ? { tachographDownloadDate: now.toISOString(), tachographDownloadNextDate: nextDate.toISOString() }
+      : { tachographRevisionDate: now.toISOString(), tachographRevisionNextDate: nextDate.toISOString() };
+    const res = await fetch(`/api/vozidla/${params.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      toast.success(type === "download" ? "Stažení tachografu potvrzeno" : "Revize tachografu potvrzena");
+      fetchVehicle();
+    }
+  };
 
   const fields: { label: string; value: string | number | null }[] = [
     { label: "Značka", value: vehicle.brand },
@@ -288,7 +312,7 @@ export default function VozidloDetailPage() {
       </div>
 
       {/* Status cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <div className={`rounded-xl p-4 ${stk.color}`}>
           <p className="text-xs font-semibold uppercase tracking-wider opacity-75">STK</p>
           <p className="text-lg font-bold mt-1">{stk.label}</p>
@@ -302,9 +326,6 @@ export default function VozidloDetailPage() {
           {vehicle.oilNextDate && (
             <p className="text-xs mt-1 opacity-75">{new Date(vehicle.oilNextDate).toLocaleDateString("cs-CZ")}</p>
           )}
-          {vehicle.oilNextKm && (
-            <p className="text-xs opacity-75">nebo {vehicle.oilNextKm.toLocaleString("cs-CZ")} km</p>
-          )}
         </div>
         <div className={`rounded-xl p-4 ${srv.color}`}>
           <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Servis</p>
@@ -312,8 +333,31 @@ export default function VozidloDetailPage() {
           {vehicle.nextServiceDate && (
             <p className="text-xs mt-1 opacity-75">{new Date(vehicle.nextServiceDate).toLocaleDateString("cs-CZ")}</p>
           )}
-          {vehicle.nextServiceKm && (
-            <p className="text-xs opacity-75">nebo {vehicle.nextServiceKm.toLocaleString("cs-CZ")} km</p>
+        </div>
+        <div className={`rounded-xl p-4 ${tachDl.color}`}>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Stažení tach.</p>
+          </div>
+          <p className="text-lg font-bold mt-1">{tachDl.label}</p>
+          {vehicle.tachographDownloadNextDate && (
+            <p className="text-xs mt-1 opacity-75">{new Date(vehicle.tachographDownloadNextDate).toLocaleDateString("cs-CZ")}</p>
+          )}
+          {vehicle.tachographDownloadNextDate && (
+            <button onClick={() => handleTachographDone("download")} className="mt-2 px-3 py-1 bg-white/80 hover:bg-white text-xs font-medium rounded-lg transition">
+              Staženo
+            </button>
+          )}
+        </div>
+        <div className={`rounded-xl p-4 ${tachRev.color}`}>
+          <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Revize tach.</p>
+          <p className="text-lg font-bold mt-1">{tachRev.label}</p>
+          {vehicle.tachographRevisionNextDate && (
+            <p className="text-xs mt-1 opacity-75">{new Date(vehicle.tachographRevisionNextDate).toLocaleDateString("cs-CZ")}</p>
+          )}
+          {vehicle.tachographRevisionNextDate && (
+            <button onClick={() => handleTachographDone("revision")} className="mt-2 px-3 py-1 bg-white/80 hover:bg-white text-xs font-medium rounded-lg transition">
+              Provedeno
+            </button>
           )}
         </div>
       </div>
