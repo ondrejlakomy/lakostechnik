@@ -123,14 +123,12 @@ export default function VozidlaPage() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Název</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Kategorie</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">SPZ</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Značka / Model</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Km / Mth</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">STK</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Olej</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stažení tach.</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Revize tach.</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Úkoly</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Řidič</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stav</th>
                 </tr>
               </thead>
@@ -154,9 +152,6 @@ export default function VozidlaPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900">{v.spz || "–"}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {[v.brand, v.model].filter(Boolean).join(" ") || "–"}
-                      </td>
                       <td className="px-4 py-3 text-sm text-gray-900">
                         {showKm
                           ? (v.odometerKm != null ? `${v.odometerKm.toLocaleString("cs-CZ")} km` : "–")
@@ -190,9 +185,6 @@ export default function VozidlaPage() {
                         ) : (
                           <span className="text-gray-400">0</span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {v.assignedDriver?.name || "–"}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <ActiveBadge active={v.active} />
