@@ -247,6 +247,9 @@ export default function VozidloDetailPage() {
   const tachDl = getDateStatus(vehicle.tachographDownloadNextDate);
   const tachRev = getDateStatus(vehicle.tachographRevisionNextDate);
 
+  const [editingTach, setEditingTach] = useState<"download" | "revision" | null>(null);
+  const [tachDate, setTachDate] = useState("");
+
   const handleTachographDone = async (type: "download" | "revision") => {
     const now = new Date();
     const nextDate = new Date(now);
@@ -260,7 +263,25 @@ export default function VozidloDetailPage() {
       body: JSON.stringify(body),
     });
     if (res.ok) {
-      toast.success(type === "download" ? "Stažení tachografu potvrzeno" : "Revize tachografu potvrzena");
+      toast.success(type === "download" ? "Stažení tachografu potvrzeno – další za 3 měsíce" : "Revize tachografu potvrzena – další za 24 měsíců");
+      fetchVehicle();
+    }
+  };
+
+  const handleTachographSetDate = async () => {
+    if (!editingTach || !tachDate) return;
+    const body = editingTach === "download"
+      ? { tachographDownloadNextDate: new Date(tachDate).toISOString() }
+      : { tachographRevisionNextDate: new Date(tachDate).toISOString() };
+    const res = await fetch(`/api/vozidla/${params.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      toast.success("Termín nastaven");
+      setEditingTach(null);
+      setTachDate("");
       fetchVehicle();
     }
   };
@@ -335,32 +356,78 @@ export default function VozidloDetailPage() {
           )}
         </div>
         <div className={`rounded-xl p-4 ${tachDl.color}`}>
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Stažení tach.</p>
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Stažení tach. <span className="font-normal">(3 měs.)</span></p>
           <p className="text-lg font-bold mt-1">{tachDl.label}</p>
           {vehicle.tachographDownloadNextDate && (
             <p className="text-xs mt-1 opacity-75">{new Date(vehicle.tachographDownloadNextDate).toLocaleDateString("cs-CZ")}</p>
           )}
-          {vehicle.tachographDownloadNextDate && (
-            <button onClick={() => handleTachographDone("download")} className="mt-2 px-3 py-1 bg-white/80 hover:bg-white text-xs font-medium rounded-lg transition">
-              Staženo
+          <div className="flex gap-1 mt-2 flex-wrap">
+            {vehicle.tachographDownloadNextDate && (
+              <button onClick={() => handleTachographDone("download")} className="px-2 py-1 bg-white/80 hover:bg-white text-xs font-medium rounded-lg transition">
+                Staženo
+              </button>
+            )}
+            <button onClick={() => { setEditingTach("download"); setTachDate(vehicle.tachographDownloadNextDate ? new Date(vehicle.tachographDownloadNextDate).toISOString().split("T")[0] : ""); }} className="px-2 py-1 bg-white/50 hover:bg-white/80 text-xs rounded-lg transition">
+              Nastavit
             </button>
-          )}
+          </div>
         </div>
         <div className={`rounded-xl p-4 ${tachRev.color}`}>
-          <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Revize tach.</p>
+          <p className="text-xs font-semibold uppercase tracking-wider opacity-75">Revize tach. <span className="font-normal">(24 měs.)</span></p>
           <p className="text-lg font-bold mt-1">{tachRev.label}</p>
           {vehicle.tachographRevisionNextDate && (
             <p className="text-xs mt-1 opacity-75">{new Date(vehicle.tachographRevisionNextDate).toLocaleDateString("cs-CZ")}</p>
           )}
-          {vehicle.tachographRevisionNextDate && (
-            <button onClick={() => handleTachographDone("revision")} className="mt-2 px-3 py-1 bg-white/80 hover:bg-white text-xs font-medium rounded-lg transition">
-              Provedeno
+          <div className="flex gap-1 mt-2 flex-wrap">
+            {vehicle.tachographRevisionNextDate && (
+              <button onClick={() => handleTachographDone("revision")} className="px-2 py-1 bg-white/80 hover:bg-white text-xs font-medium rounded-lg transition">
+                Provedeno
+              </button>
+            )}
+            <button onClick={() => { setEditingTach("revision"); setTachDate(vehicle.tachographRevisionNextDate ? new Date(vehicle.tachographRevisionNextDate).toISOString().split("T")[0] : ""); }} className="px-2 py-1 bg-white/50 hover:bg-white/80 text-xs rounded-lg transition">
+              Nastavit
             </button>
-          )}
+          </div>
         </div>
       </div>
+
+      {/* Dialog pro nastavení tachografu */}
+      {editingTach && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {editingTach === "download" ? "Nastavit termín stažení tachografu" : "Nastavit termín revize tachografu"}
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">
+              {editingTach === "download" ? "Interval: každé 3 měsíce" : "Interval: každých 24 měsíců"}
+            </p>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Příští termín</label>
+              <input
+                type="date"
+                value={tachDate}
+                onChange={(e) => setTachDate(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+            </div>
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                onClick={() => { setEditingTach(null); setTachDate(""); }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
+              >
+                Zrušit
+              </button>
+              <button
+                onClick={handleTachographSetDate}
+                disabled={!tachDate}
+                className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition disabled:opacity-50"
+              >
+                Uložit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Základní údaje */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
