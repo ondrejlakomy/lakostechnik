@@ -98,6 +98,10 @@ export async function PUT(
       ...(body.lastServiceKm !== undefined && { lastServiceKm: body.lastServiceKm }),
       ...(body.nextServiceDate !== undefined && { nextServiceDate: body.nextServiceDate ? new Date(body.nextServiceDate) : null }),
       ...(body.nextServiceKm !== undefined && { nextServiceKm: body.nextServiceKm }),
+      ...(body.tachographDownloadDate !== undefined && { tachographDownloadDate: body.tachographDownloadDate ? new Date(body.tachographDownloadDate) : null }),
+      ...(body.tachographDownloadNextDate !== undefined && { tachographDownloadNextDate: body.tachographDownloadNextDate ? new Date(body.tachographDownloadNextDate) : null }),
+      ...(body.tachographRevisionDate !== undefined && { tachographRevisionDate: body.tachographRevisionDate ? new Date(body.tachographRevisionDate) : null }),
+      ...(body.tachographRevisionNextDate !== undefined && { tachographRevisionNextDate: body.tachographRevisionNextDate ? new Date(body.tachographRevisionNextDate) : null }),
     },
   });
 
