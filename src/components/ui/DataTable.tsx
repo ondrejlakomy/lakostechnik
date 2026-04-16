@@ -13,6 +13,7 @@ interface DataTableProps<T> {
   data: T[];
   editHref?: (item: T) => string;
   onDelete?: (item: T) => void;
+  deleteLabel?: string;
   emptyMessage?: string;
 }
 
@@ -21,6 +22,7 @@ export default function DataTable<T extends { id: string }>({
   data,
   editHref,
   onDelete,
+  deleteLabel = "Deaktivovat",
   emptyMessage = "Žádné záznamy",
 }: DataTableProps<T>) {
   if (data.length === 0) {
@@ -77,7 +79,7 @@ export default function DataTable<T extends { id: string }>({
                         onClick={() => onDelete(item)}
                         className="text-red-500 hover:text-red-700 font-medium"
                       >
-                        Smazat
+                        {deleteLabel}
                       </button>
                     )}
                   </td>
