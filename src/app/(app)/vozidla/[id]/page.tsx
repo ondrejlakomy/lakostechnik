@@ -141,6 +141,11 @@ export default function VozidloDetailPage() {
   const [savingTask, setSavingTask] = useState(false);
   const [editingTach, setEditingTach] = useState<"download" | "revision" | null>(null);
   const [tachDate, setTachDate] = useState("");
+  const [documents, setDocuments] = useState<{ id: string; name: string; fileName: string; fileUrl: string; fileSize: number | null; note: string | null; createdAt: string; uploadedBy: { firstName: string; lastName: string } | null }[]>([]);
+  const [showUpload, setShowUpload] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadName, setUploadName] = useState("");
+  const [uploadNote, setUploadNote] = useState("");
 
   const [serviceForm, setServiceForm] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -166,7 +171,47 @@ export default function VozidloDetailPage() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchVehicle(); }, [params.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const fetchDocuments = async () => {
+    const res = await fetch(`/api/vozidla/${params.id}/dokumenty`);
+    if (res.ok) setDocuments(await res.json());
+  };
+
+  const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement;
+    const file = fileInput?.files?.[0];
+    if (!file) { toast.error("Vyberte soubor"); return; }
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("name", uploadName || file.name);
+    formData.append("note", uploadNote);
+
+    const res = await fetch(`/api/vozidla/${params.id}/dokumenty`, { method: "POST", body: formData });
+    if (res.ok) {
+      toast.success("Dokument nahrán");
+      setShowUpload(false);
+      setUploadName("");
+      setUploadNote("");
+      fetchDocuments();
+    } else {
+      const data = await res.json();
+      toast.error(data.error || "Chyba při nahrávání");
+    }
+    setUploading(false);
+  };
+
+  const handleDeleteDoc = async (docId: string) => {
+    const res = await fetch(`/api/vozidla/${params.id}/dokumenty?docId=${docId}`, { method: "DELETE" });
+    if (res.ok) {
+      toast.success("Dokument smazán");
+      fetchDocuments();
+    }
+  };
+
+  useEffect(() => { fetchVehicle(); fetchDocuments(); }, [params.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleServiceChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setServiceForm({ ...serviceForm, [e.target.name]: e.target.value });
@@ -571,6 +616,75 @@ export default function VozidloDetailPage() {
                       Hotovo
                     </button>
                   )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Dokumenty */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Dokumenty</h2>
+          <button
+            onClick={() => setShowUpload(!showUpload)}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition"
+          >
+            {showUpload ? "Zavřít" : "Nahrát soubor"}
+          </button>
+        </div>
+
+        {showUpload && (
+          <form onSubmit={handleUpload} className="bg-gray-50 rounded-lg p-4 mb-4 space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Soubor (PDF, max 10 MB) <span className="text-red-500">*</span></label>
+              <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" className="w-full text-sm text-gray-700 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Název dokumentu</label>
+              <input value={uploadName} onChange={(e) => setUploadName(e.target.value)} placeholder="Např. Technický průkaz" className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Poznámka</label>
+              <input value={uploadNote} onChange={(e) => setUploadNote(e.target.value)} placeholder="Volitelně" className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+            </div>
+            <button type="submit" disabled={uploading} className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50">
+              {uploading ? "Nahrávám..." : "Nahrát"}
+            </button>
+          </form>
+        )}
+
+        {documents.length === 0 ? (
+          <p className="text-gray-500 text-sm">Žádné dokumenty</p>
+        ) : (
+          <div className="space-y-2">
+            {documents.map((doc) => (
+              <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                    <span className="text-red-700 text-xs font-bold">PDF</span>
+                  </div>
+                  <div className="min-w-0">
+                    <a href={`/api/vozidla/${params.id}/dokumenty/${doc.id}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-600 hover:text-green-700 truncate block">
+                      {doc.name}
+                    </a>
+                    <p className="text-xs text-gray-400">
+                      {doc.fileName}
+                      {doc.fileSize && ` · ${(doc.fileSize / 1024).toFixed(0)} KB`}
+                      {doc.uploadedBy && ` · ${doc.uploadedBy.firstName} ${doc.uploadedBy.lastName}`}
+                      {` · ${new Date(doc.createdAt).toLocaleDateString("cs-CZ")}`}
+                    </p>
+                    {doc.note && <p className="text-xs text-gray-500 mt-0.5">{doc.note}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                  <a href={`/api/vozidla/${params.id}/dokumenty/${doc.id}`} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 text-sm font-medium">
+                    Otevřít
+                  </a>
+                  <button onClick={() => handleDeleteDoc(doc.id)} className="text-red-500 hover:text-red-700 text-sm font-medium">
+                    Smazat
+                  </button>
                 </div>
               </div>
             ))}
