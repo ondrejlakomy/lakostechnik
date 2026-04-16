@@ -31,6 +31,10 @@ interface AlertVehicle {
   oilNextDate?: string;
   oilNextKm?: number;
   oilNextHours?: number;
+  tachographDownloadNextDate?: string;
+  tachographDownloadDate?: string;
+  tachographRevisionNextDate?: string;
+  tachographRevisionDate?: string;
 }
 
 interface DashboardData {
@@ -40,6 +44,10 @@ interface DashboardData {
   urgentTasks: number;
   openTasks: number;
   byCategory: Record<string, number>;
+  stkAlertVehicles: AlertVehicle[];
+  oilAlertVehicles: AlertVehicle[];
+  tachDownloadAlertVehicles: AlertVehicle[];
+  tachRevisionAlertVehicles: AlertVehicle[];
   upcomingDeadlines: {
     vehicleId: string;
     vehicleName: string;
@@ -47,20 +55,41 @@ interface DashboardData {
     deadlineType: string;
     deadlineDate: string;
   }[];
-  stkAlertVehicles: AlertVehicle[];
-  oilAlertVehicles: AlertVehicle[];
 }
 
 export default function VozidlaDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchData = () => {
     fetch("/api/vozidla/dashboard")
       .then((r) => r.json())
       .then((d) => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const handleTachographDone = async (vehicleId: string, type: "download" | "revision") => {
+    const now = new Date();
+    const nextDate = new Date(now);
+    nextDate.setMonth(nextDate.getMonth() + (type === "download" ? 3 : 24));
+
+    const body = type === "download"
+      ? { tachographDownloadDate: now.toISOString(), tachographDownloadNextDate: nextDate.toISOString() }
+      : { tachographRevisionDate: now.toISOString(), tachographRevisionNextDate: nextDate.toISOString() };
+
+    const res = await fetch(`/api/vozidla/${vehicleId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      const toast = (await import("react-hot-toast")).default;
+      toast.success(type === "download" ? "Stažení tachografu potvrzeno" : "Revize tachografu potvrzena");
+      fetchData();
+    }
+  };
 
   if (loading) return <div className="text-gray-500">Načítání...</div>;
   if (!data) return <div className="text-red-500">Chyba při načítání dat</div>;
@@ -140,6 +169,83 @@ export default function VozidlaDashboardPage() {
                       {v.oilNextDate ? new Date(v.oilNextDate).toLocaleDateString("cs-CZ") : "–"} · {status.label}
                     </span>
                   </a>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Tachograf */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Stažení tachografu - 3 měsíce */}
+        <div className={`bg-white rounded-xl border p-5 ${data.tachDownloadAlertVehicles?.length > 0 ? "border-purple-200" : "border-gray-200"}`}>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            Stažení tachografu
+            <span className="text-xs font-normal text-gray-400">co 3 měsíce</span>
+            {data.tachDownloadAlertVehicles?.length > 0 && (
+              <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-0.5 rounded-full">{data.tachDownloadAlertVehicles.length}</span>
+            )}
+          </h2>
+          {!data.tachDownloadAlertVehicles?.length ? (
+            <p className="text-green-600 text-sm font-medium">Vše v pořádku</p>
+          ) : (
+            <div className="space-y-2">
+              {data.tachDownloadAlertVehicles.map((v) => {
+                const status = getDateStatus(v.tachographDownloadNextDate || null);
+                return (
+                  <div key={v.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                    <a href={`/vozidla/${v.id}`} className="flex-1">
+                      <span className="font-medium text-gray-900">{v.name}</span>
+                      {v.spz && <span className="text-gray-500 ml-2 text-sm">{v.spz}</span>}
+                      <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
+                        {v.tachographDownloadNextDate ? new Date(v.tachographDownloadNextDate).toLocaleDateString("cs-CZ") : "–"} · {status.label}
+                      </span>
+                    </a>
+                    <button
+                      onClick={() => handleTachographDone(v.id, "download")}
+                      className="ml-3 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition flex-shrink-0"
+                    >
+                      Staženo
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Revize tachografu - 24 měsíců */}
+        <div className={`bg-white rounded-xl border p-5 ${data.tachRevisionAlertVehicles?.length > 0 ? "border-purple-200" : "border-gray-200"}`}>
+          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            Revize tachografu
+            <span className="text-xs font-normal text-gray-400">co 24 měsíců</span>
+            {data.tachRevisionAlertVehicles?.length > 0 && (
+              <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-0.5 rounded-full">{data.tachRevisionAlertVehicles.length}</span>
+            )}
+          </h2>
+          {!data.tachRevisionAlertVehicles?.length ? (
+            <p className="text-green-600 text-sm font-medium">Vše v pořádku</p>
+          ) : (
+            <div className="space-y-2">
+              {data.tachRevisionAlertVehicles.map((v) => {
+                const status = getDateStatus(v.tachographRevisionNextDate || null);
+                return (
+                  <div key={v.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                    <a href={`/vozidla/${v.id}`} className="flex-1">
+                      <span className="font-medium text-gray-900">{v.name}</span>
+                      {v.spz && <span className="text-gray-500 ml-2 text-sm">{v.spz}</span>}
+                      <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
+                        {v.tachographRevisionNextDate ? new Date(v.tachographRevisionNextDate).toLocaleDateString("cs-CZ") : "–"} · {status.label}
+                      </span>
+                    </a>
+                    <button
+                      onClick={() => handleTachographDone(v.id, "revision")}
+                      className="ml-3 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition flex-shrink-0"
+                    >
+                      Provedeno
+                    </button>
+                  </div>
                 );
               })}
             </div>

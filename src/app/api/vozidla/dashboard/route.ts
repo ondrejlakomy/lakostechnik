@@ -67,6 +67,8 @@ export async function GET() {
         { stkNextDate: { not: null } },
         { oilNextDate: { not: null } },
         { nextServiceDate: { not: null } },
+        { tachographDownloadNextDate: { not: null } },
+        { tachographRevisionNextDate: { not: null } },
       ],
     },
     select: {
@@ -77,6 +79,8 @@ export async function GET() {
       stkNextDate: true,
       oilNextDate: true,
       nextServiceDate: true,
+      tachographDownloadNextDate: true,
+      tachographRevisionNextDate: true,
     },
   });
 
@@ -87,6 +91,8 @@ export async function GET() {
         v.stkNextDate ? { type: "STK", date: v.stkNextDate } : null,
         v.oilNextDate ? { type: "Výměna oleje", date: v.oilNextDate } : null,
         v.nextServiceDate ? { type: "Servis", date: v.nextServiceDate } : null,
+        v.tachographDownloadNextDate ? { type: "Stažení tachografu", date: v.tachographDownloadNextDate } : null,
+        v.tachographRevisionNextDate ? { type: "Revize tachografu", date: v.tachographRevisionNextDate } : null,
       ].filter(Boolean) as { type: string; date: Date }[];
 
       if (dates.length === 0) return null;
@@ -126,6 +132,28 @@ export async function GET() {
     orderBy: { oilNextDate: "asc" },
   });
 
+  // Tachograf - stažení (3 měsíce) - prošlé nebo do 30 dní
+  const tachDownloadAlertVehicles = await prisma.vehicle.findMany({
+    where: {
+      active: true,
+      tachographDownloadNextDate: { not: null, lte: in30Days },
+    },
+    select: { id: true, name: true, spz: true, category: true, tachographDownloadNextDate: true, tachographDownloadDate: true },
+    orderBy: { tachographDownloadNextDate: "asc" },
+  });
+
+  // Tachograf - revize (24 měsíců) - prošlé nebo do 60 dní
+  const in60Days = new Date();
+  in60Days.setDate(in60Days.getDate() + 60);
+  const tachRevisionAlertVehicles = await prisma.vehicle.findMany({
+    where: {
+      active: true,
+      tachographRevisionNextDate: { not: null, lte: in60Days },
+    },
+    select: { id: true, name: true, spz: true, category: true, tachographRevisionNextDate: true, tachographRevisionDate: true },
+    orderBy: { tachographRevisionNextDate: "asc" },
+  });
+
   return jsonResponse({
     totalVehicles,
     activeVehicles,
@@ -138,5 +166,7 @@ export async function GET() {
     upcomingDeadlines,
     stkAlertVehicles,
     oilAlertVehicles,
+    tachDownloadAlertVehicles,
+    tachRevisionAlertVehicles,
   });
 }
