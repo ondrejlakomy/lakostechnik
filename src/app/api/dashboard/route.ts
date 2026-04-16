@@ -46,6 +46,27 @@ export async function GET(req: Request) {
   const totalKm = transports.reduce((sum, t) => sum + (t.kilometers || 0), 0);
   const totalPrm = transports.reduce((sum, t) => sum + (t.prm || 0), 0);
 
+  // Předchozí období pro porovnání
+  let prevTransports = 0, prevWeight = 0, prevKm = 0, prevPrm = 0;
+  if (dateFrom && dateTo) {
+    const from = new Date(dateFrom);
+    const to = new Date(dateTo + "T23:59:59");
+    const diff = to.getTime() - from.getTime();
+    const prevFrom = new Date(from.getTime() - diff);
+    const prevTo = new Date(from);
+    const prevData = await prisma.transport.findMany({
+      where: {
+        status: { not: "STORNOVANO" },
+        createdAt: { gte: prevFrom, lt: prevTo },
+      },
+      select: { nettoWeight: true, kilometers: true, prm: true },
+    });
+    prevTransports = prevData.length;
+    prevWeight = prevData.reduce((s, t) => s + (t.nettoWeight || 0), 0);
+    prevKm = prevData.reduce((s, t) => s + (t.kilometers || 0), 0);
+    prevPrm = prevData.reduce((s, t) => s + (t.prm || 0), 0);
+  }
+
   // Agregace podle elektráren
   const byPowerPlant: Record<string, { name: string; weight: number; count: number }> = {};
   transports.forEach((t) => {
@@ -202,6 +223,10 @@ export async function GET(req: Request) {
     totalWeight,
     totalKm,
     totalPrm,
+    prevTransports,
+    prevWeight,
+    prevKm,
+    prevPrm,
     warehouses,
     byPowerPlant: Object.values(byPowerPlant),
     byCustomer: Object.values(byCustomer),

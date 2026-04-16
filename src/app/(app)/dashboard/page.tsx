@@ -16,6 +16,10 @@ interface DashData {
   byChipper: { name: string; weight: number; count: number }[];
   byLocation: { name: string; weight: number; count: number }[];
   byShift: { name: string; weight: number; count: number }[];
+  prevTransports: number;
+  prevWeight: number;
+  prevKm: number;
+  prevPrm: number;
   weeklyPlans: { powerPlantName: string; targetPrm: number; unit: string; deliveredPrm: number; percentage: number; remaining: number }[];
   vehicleCritical: { vehicleId: string; vehicleName: string; spz: string | null; type: string; date: string }[];
 }
@@ -68,40 +72,74 @@ export default function DashboardPage() {
 
   if (!data) return <div className="text-gray-500">Načítání dashboardu...</div>;
 
+  function TrendBadge({ current, previous }: { current: number; previous: number }) {
+    if (!previous) return null;
+    const diff = current - previous;
+    const pct = Math.round((diff / previous) * 100);
+    if (pct === 0) return null;
+    const isUp = pct > 0;
+    return (
+      <span className={`text-xs font-medium ${isUp ? "text-green-600" : "text-red-500"}`}>
+        {isUp ? "+" : ""}{pct} %
+      </span>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <div className="flex flex-wrap gap-2">
-          {(["today", "week", "month", "custom"] as Period[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 text-sm rounded-lg font-medium transition ${
-                period === p
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {{ today: "Dnes", week: "Týden", month: "Měsíc", custom: "Vlastní" }[p]}
-            </button>
-          ))}
-          {period === "custom" && (
-            <div className="flex gap-2">
-              <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="px-2 py-1 text-sm border rounded-lg" />
-              <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="px-2 py-1 text-sm border rounded-lg" />
-            </div>
-          )}
-        </div>
-      </div>
+      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
 
-      {/* KPI karty */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <KpiCard title="Zásoby celkem" value={data.totalStock.toFixed(1)} unit="t" />
-        <KpiCard title="Přeprav" value={data.totalTransports} />
-        <KpiCard title="Odvezeno" value={data.totalWeight.toFixed(1)} unit="t" />
-        <KpiCard title="Najeto km" value={Math.round(data.totalKm).toLocaleString("cs-CZ")} unit="km" />
-        <KpiCard title="PRM celkem" value={data.totalPrm.toFixed(1)} />
+      {/* Zásoby – bez filtru */}
+      <KpiCard title="Zásoby celkem" value={data.totalStock.toFixed(1)} unit="PRM" />
+
+      {/* Přepravy – blok s filtrem */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Přepravy za období</h2>
+          <div className="flex flex-wrap gap-2">
+            {(["today", "week", "month", "custom"] as Period[]).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition ${
+                  period === p
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                {{ today: "Dnes", week: "Týden", month: "Měsíc", custom: "Vlastní" }[p]}
+              </button>
+            ))}
+            {period === "custom" && (
+              <div className="flex gap-2">
+                <input type="date" value={customFrom} onChange={(e) => setCustomFrom(e.target.value)} className="px-2 py-1 text-sm border rounded-lg" />
+                <input type="date" value={customTo} onChange={(e) => setCustomTo(e.target.value)} className="px-2 py-1 text-sm border rounded-lg" />
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <p className="text-sm text-gray-500">Přeprav</p>
+            <p className="text-2xl font-bold text-gray-900">{data.totalTransports}</p>
+            <TrendBadge current={data.totalTransports} previous={data.prevTransports} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Odvezeno</p>
+            <p className="text-2xl font-bold text-gray-900">{data.totalWeight.toFixed(1)} <span className="text-base font-normal text-gray-500">t</span></p>
+            <TrendBadge current={data.totalWeight} previous={data.prevWeight} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Najeto</p>
+            <p className="text-2xl font-bold text-gray-900">{Math.round(data.totalKm).toLocaleString("cs-CZ")} <span className="text-base font-normal text-gray-500">km</span></p>
+            <TrendBadge current={data.totalKm} previous={data.prevKm} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">PRM celkem</p>
+            <p className="text-2xl font-bold text-gray-900">{data.totalPrm.toFixed(1)}</p>
+            <TrendBadge current={data.totalPrm} previous={data.prevPrm} />
+          </div>
+        </div>
       </div>
 
       {/* Kritické termíny + Plány elektráren vedle sebe */}
