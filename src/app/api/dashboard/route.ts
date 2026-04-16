@@ -150,6 +150,52 @@ export async function GET(req: Request) {
     })
   );
 
+  // ========= VOZIDLA – kritické termíny =========
+  const now2 = new Date();
+  const in30 = new Date();
+  in30.setDate(in30.getDate() + 30);
+
+  const vehicleAlerts = await prisma.vehicle.findMany({
+    where: {
+      active: true,
+      OR: [
+        { stkNextDate: { lte: in30 } },
+        { oilNextDate: { lte: in30 } },
+        { tachographDownloadNextDate: { lte: in30 } },
+        { tachographRevisionNextDate: { lte: in30 } },
+      ],
+    },
+    select: {
+      id: true,
+      name: true,
+      spz: true,
+      stkNextDate: true,
+      oilNextDate: true,
+      tachographDownloadNextDate: true,
+      tachographRevisionNextDate: true,
+      _count: { select: { tasks: { where: { status: { in: ["OTEVRENY", "V_RESENI"] } } } } },
+    },
+    orderBy: { name: "asc" },
+  });
+
+  // Transformovat na seznam alertů
+  const vehicleCritical: { vehicleId: string; vehicleName: string; spz: string | null; type: string; date: string }[] = [];
+  for (const v of vehicleAlerts) {
+    if (v.stkNextDate && v.stkNextDate <= in30) {
+      vehicleCritical.push({ vehicleId: v.id, vehicleName: v.name, spz: v.spz, type: "STK", date: v.stkNextDate.toISOString() });
+    }
+    if (v.oilNextDate && v.oilNextDate <= in30) {
+      vehicleCritical.push({ vehicleId: v.id, vehicleName: v.name, spz: v.spz, type: "Olej", date: v.oilNextDate.toISOString() });
+    }
+    if (v.tachographDownloadNextDate && v.tachographDownloadNextDate <= in30) {
+      vehicleCritical.push({ vehicleId: v.id, vehicleName: v.name, spz: v.spz, type: "Stažení tachografu", date: v.tachographDownloadNextDate.toISOString() });
+    }
+    if (v.tachographRevisionNextDate && v.tachographRevisionNextDate <= in30) {
+      vehicleCritical.push({ vehicleId: v.id, vehicleName: v.name, spz: v.spz, type: "Revize tachografu", date: v.tachographRevisionNextDate.toISOString() });
+    }
+  }
+  vehicleCritical.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
   return jsonResponse({
     totalStock,
     totalTransports,
@@ -164,5 +210,6 @@ export async function GET(req: Request) {
     byLocation: Object.values(byLocation),
     byShift: Object.values(byShift),
     weeklyPlans: weeklyPlansWithProgress,
+    vehicleCritical,
   });
 }

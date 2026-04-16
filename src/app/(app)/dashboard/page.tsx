@@ -17,6 +17,7 @@ interface DashData {
   byLocation: { name: string; weight: number; count: number }[];
   byShift: { name: string; weight: number; count: number }[];
   weeklyPlans: { powerPlantName: string; targetPrm: number; deliveredPrm: number; percentage: number; remaining: number }[];
+  vehicleCritical: { vehicleId: string; vehicleName: string; spz: string | null; type: string; date: string }[];
 }
 
 type Period = "today" | "week" | "month" | "custom";
@@ -101,6 +102,54 @@ export default function DashboardPage() {
         <KpiCard title="Najeto km" value={Math.round(data.totalKm).toLocaleString("cs-CZ")} unit="km" />
         <KpiCard title="PRM celkem" value={data.totalPrm.toFixed(1)} />
       </div>
+
+      {/* Vozidla – kritické termíny */}
+      {data.vehicleCritical && data.vehicleCritical.length > 0 && (
+        <div className="bg-white rounded-xl border border-red-200 p-5">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            Vozidla – kritické termíny
+            <span className="bg-red-100 text-red-700 text-xs font-medium px-2.5 py-0.5 rounded-full">{data.vehicleCritical.length}</span>
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Vozidlo</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase">SPZ</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Typ</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Termín</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase">Stav</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {data.vehicleCritical.map((item, i) => {
+                  const d = new Date(item.date);
+                  const now = new Date();
+                  const diff = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                  const isExpired = diff < 0;
+                  const statusColor = isExpired ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700";
+                  const statusLabel = isExpired ? `${Math.abs(diff)} dní po termínu` : `za ${diff} dní`;
+                  return (
+                    <tr key={`${item.vehicleId}-${item.type}-${i}`} className="hover:bg-gray-50">
+                      <td className="px-3 py-2.5 text-sm">
+                        <a href={`/vozidla/${item.vehicleId}`} className="text-green-600 hover:text-green-700 font-medium">{item.vehicleName}</a>
+                      </td>
+                      <td className="px-3 py-2.5 text-sm text-gray-500">{item.spz || "–"}</td>
+                      <td className="px-3 py-2.5 text-sm text-gray-900">{item.type}</td>
+                      <td className="px-3 py-2.5 text-sm text-gray-700">{d.toLocaleDateString("cs-CZ")}</td>
+                      <td className="px-3 py-2.5 text-sm">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+                          {statusLabel}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Týdenní plány elektráren */}
       {data.weeklyPlans && data.weeklyPlans.length > 0 && (
