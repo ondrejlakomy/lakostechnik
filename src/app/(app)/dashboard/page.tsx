@@ -45,6 +45,7 @@ export default function DashboardPage() {
   const [period, setPeriod] = useState<Period>("month");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const [showAllAlerts, setShowAllAlerts] = useState(false);
 
   const fetchData = async () => {
     const range = period === "custom"
@@ -122,7 +123,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {data.vehicleCritical.map((item, i) => {
+                {(showAllAlerts ? data.vehicleCritical : data.vehicleCritical.slice(0, 5)).map((item, i) => {
                   const d = new Date(item.date);
                   const now = new Date();
                   const diff = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -148,6 +149,22 @@ export default function DashboardPage() {
               </tbody>
             </table>
           </div>
+          {data.vehicleCritical.length > 5 && !showAllAlerts && (
+            <button
+              onClick={() => setShowAllAlerts(true)}
+              className="mt-3 w-full py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition"
+            >
+              Zobrazit více ({data.vehicleCritical.length - 5} dalších)
+            </button>
+          )}
+          {showAllAlerts && data.vehicleCritical.length > 5 && (
+            <button
+              onClick={() => setShowAllAlerts(false)}
+              className="mt-3 w-full py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-lg transition"
+            >
+              Zobrazit méně
+            </button>
+          )}
         </div>
       )}
 
