@@ -34,17 +34,25 @@ export async function GET(req: Request) {
             lt: weekEnd,
           },
         },
-        select: { prm: true },
+        select: { prm: true, nettoWeight: true },
       });
 
-      const deliveredPrm = transports.reduce((sum, t) => sum + (t.prm || 0), 0);
-      const percentage = plan.targetPrm > 0 ? Math.round((deliveredPrm / plan.targetPrm) * 100) : 0;
+      let delivered = 0;
+      if (plan.unit === "LKW") {
+        delivered = transports.length;
+      } else if (plan.unit === "t") {
+        delivered = transports.reduce((sum, t) => sum + (t.nettoWeight || 0), 0);
+      } else {
+        delivered = transports.reduce((sum, t) => sum + (t.prm || 0), 0);
+      }
+
+      const percentage = plan.targetPrm > 0 ? Math.round((delivered / plan.targetPrm) * 100) : 0;
 
       return {
         ...plan,
-        deliveredPrm,
+        deliveredPrm: delivered,
         percentage,
-        remaining: Math.max(0, plan.targetPrm - deliveredPrm),
+        remaining: Math.max(0, plan.targetPrm - delivered),
       };
     })
   );
@@ -58,7 +66,7 @@ export async function POST(req: Request) {
 
   const body = await req.json();
   if (!body.powerPlantId || !body.weekStart || !body.targetPrm) {
-    return errorResponse("Elektrárna, začátek týdne a cílové PRM jsou povinné");
+    return errorResponse("Elektrárna, začátek týdne a cílová hodnota jsou povinné");
   }
 
   const weekStart = new Date(body.weekStart);
@@ -77,12 +85,14 @@ export async function POST(req: Request) {
     },
     update: {
       targetPrm: parseFloat(body.targetPrm),
+      unit: body.unit || "PRM",
       note: body.note || null,
     },
     create: {
       powerPlantId: body.powerPlantId,
       weekStart,
       targetPrm: parseFloat(body.targetPrm),
+      unit: body.unit || "PRM",
       note: body.note || null,
     },
   });

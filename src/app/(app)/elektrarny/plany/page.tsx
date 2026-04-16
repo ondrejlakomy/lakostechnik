@@ -12,6 +12,7 @@ interface Plan {
   powerPlant: { name: string };
   weekStart: string;
   targetPrm: number;
+  unit: string;
   deliveredPrm: number;
   percentage: number;
   remaining: number;
@@ -59,6 +60,7 @@ export default function PlanyElektrarenPage() {
     powerPlantId: "",
     weekStart: getMonday(new Date()).toISOString().split("T")[0],
     targetPrm: "",
+    unit: "PRM",
     note: "",
   });
 
@@ -127,7 +129,7 @@ export default function PlanyElektrarenPage() {
 
   return (
     <>
-      <PageHeader title="Týdenní plány elektráren" description="Plánované a skutečné odvozy PRM (Po–Pá)" />
+      <PageHeader title="Týdenní plány elektráren" description="Plánované a skutečné odvozy (Po–Pá)" />
 
       <button
         onClick={() => setShowForm(!showForm)}
@@ -156,8 +158,16 @@ export default function PlanyElektrarenPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cílové PRM <span className="text-red-500">*</span></label>
-            <input name="targetPrm" type="number" inputMode="decimal" value={form.targetPrm} onChange={handleChange} required step="0.01" min="0" placeholder="Např. 500" className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Jednotka <span className="text-red-500">*</span></label>
+            <select name="unit" value={form.unit} onChange={handleChange} className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500">
+              <option value="PRM">PRM</option>
+              <option value="t">Tuny (t)</option>
+              <option value="LKW">Počet aut (LKW)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cílová hodnota <span className="text-red-500">*</span></label>
+            <input name="targetPrm" type="number" inputMode="decimal" value={form.targetPrm} onChange={handleChange} required step={form.unit === "LKW" ? "1" : "0.01"} min="0" placeholder={form.unit === "LKW" ? "Počet aut" : `Např. 500 ${form.unit}`} className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Poznámka</label>
@@ -186,8 +196,8 @@ export default function PlanyElektrarenPage() {
                   </div>
                   <div className="flex items-end justify-between mb-2">
                     <div>
-                      <span className="text-2xl font-bold text-gray-900">{plan.deliveredPrm.toFixed(0)}</span>
-                      <span className="text-gray-500 ml-1">/ {plan.targetPrm.toFixed(0)} PRM</span>
+                      <span className="text-2xl font-bold text-gray-900">{plan.unit === "LKW" ? plan.deliveredPrm : plan.deliveredPrm.toFixed(0)}</span>
+                      <span className="text-gray-500 ml-1">/ {plan.unit === "LKW" ? plan.targetPrm : plan.targetPrm.toFixed(0)} {plan.unit}</span>
                     </div>
                     <span className="text-lg font-semibold text-gray-700">{plan.percentage} %</span>
                   </div>
@@ -198,7 +208,7 @@ export default function PlanyElektrarenPage() {
                     />
                   </div>
                   <p className="text-sm text-gray-500">
-                    Zbývá: <span className="font-medium text-gray-700">{plan.remaining.toFixed(0)} PRM</span>
+                    Zbývá: <span className="font-medium text-gray-700">{plan.unit === "LKW" ? plan.remaining : plan.remaining.toFixed(0)} {plan.unit}</span>
                   </p>
                   {plan.note && <p className="text-xs text-gray-400 mt-2">{plan.note}</p>}
                 </div>
@@ -219,7 +229,8 @@ export default function PlanyElektrarenPage() {
                   <tr className="border-b border-gray-200 bg-gray-50">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Elektrárna</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Týden</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Cíl (PRM)</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Jednotka</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Cíl</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Odvezeno</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Plnění</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Stav</th>
@@ -232,6 +243,7 @@ export default function PlanyElektrarenPage() {
                       <tr key={plan.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm font-medium text-gray-900">{plan.powerPlant.name}</td>
                         <td className="px-4 py-3 text-sm text-gray-600">{formatWeek(plan.weekStart)}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{plan.unit}</td>
                         <td className="px-4 py-3 text-sm text-right font-medium">{plan.targetPrm.toFixed(0)}</td>
                         <td className="px-4 py-3 text-sm text-right">{plan.deliveredPrm.toFixed(0)}</td>
                         <td className="px-4 py-3 text-sm text-right font-medium">{plan.percentage} %</td>

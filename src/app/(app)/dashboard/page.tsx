@@ -16,7 +16,7 @@ interface DashData {
   byChipper: { name: string; weight: number; count: number }[];
   byLocation: { name: string; weight: number; count: number }[];
   byShift: { name: string; weight: number; count: number }[];
-  weeklyPlans: { powerPlantName: string; targetPrm: number; deliveredPrm: number; percentage: number; remaining: number }[];
+  weeklyPlans: { powerPlantName: string; targetPrm: number; unit: string; deliveredPrm: number; percentage: number; remaining: number }[];
   vehicleCritical: { vehicleId: string; vehicleName: string; spz: string | null; type: string; date: string }[];
 }
 
@@ -182,14 +182,14 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium text-gray-900">{plan.powerPlantName}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">{plan.deliveredPrm.toFixed(0)} / {plan.targetPrm.toFixed(0)} PRM</span>
+                      <span className="text-sm text-gray-600">{plan.deliveredPrm.toFixed(0)} / {plan.targetPrm.toFixed(0)} {plan.unit || "PRM"}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusCls}`}>{statusText}</span>
                     </div>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2.5">
                     <div className={`h-2.5 rounded-full transition-all ${color}`} style={{ width: `${Math.min(plan.percentage, 100)}%` }} />
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">Zbývá: {plan.remaining.toFixed(0)} PRM ({plan.percentage} %)</p>
+                  <p className="text-xs text-gray-400 mt-1">Zbývá: {plan.remaining.toFixed(0)} {plan.unit || "PRM"} ({plan.percentage} %)</p>
                 </div>
               );
             })}

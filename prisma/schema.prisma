@@ -134,6 +134,7 @@ model PowerPlantWeeklyPlan {
   powerPlant    PowerPlant @relation(fields: [powerPlantId], references: [id])
   weekStart     DateTime  @map("week_start")
   targetPrm     Float     @map("target_prm")
+  unit          String    @default("PRM")
   note          String?
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
