@@ -139,6 +139,8 @@ export default function VozidloDetailPage() {
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [savingService, setSavingService] = useState(false);
   const [savingTask, setSavingTask] = useState(false);
+  const [editingTach, setEditingTach] = useState<"download" | "revision" | null>(null);
+  const [tachDate, setTachDate] = useState("");
 
   const [serviceForm, setServiceForm] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -246,9 +248,6 @@ export default function VozidloDetailPage() {
   const srv = getDateStatus(vehicle.nextServiceDate);
   const tachDl = getDateStatus(vehicle.tachographDownloadNextDate);
   const tachRev = getDateStatus(vehicle.tachographRevisionNextDate);
-
-  const [editingTach, setEditingTach] = useState<"download" | "revision" | null>(null);
-  const [tachDate, setTachDate] = useState("");
 
   const handleTachographDone = async (type: "download" | "revision") => {
     const now = new Date();
