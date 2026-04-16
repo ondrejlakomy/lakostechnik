@@ -89,8 +89,25 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
 
-      {/* Zásoby – bez filtru */}
-      <KpiCard title="Zásoby celkem" value={data.totalStock.toFixed(1)} unit="PRM" />
+      {/* Zásoby na skladech */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col md:flex-row md:items-center gap-4">
+        <div className="flex-shrink-0">
+          <p className="text-sm font-medium text-gray-500">Zásoby celkem</p>
+          <p className="text-3xl font-bold text-gray-900 mt-1">{data.totalStock.toFixed(1)} <span className="text-lg font-normal text-gray-500">PRM</span></p>
+        </div>
+        {data.warehouses.length > 0 && (
+          <div className="flex-1 md:border-l md:pl-4 border-gray-200">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2">
+              {data.warehouses.map((w) => (
+                <div key={w.id} className="flex items-center justify-between gap-2">
+                  <span className="text-sm text-gray-600 truncate">{w.code} – {w.name}</span>
+                  <span className="text-sm font-semibold text-gray-900 flex-shrink-0">{w.currentStock.toFixed(0)} {w.unit}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Přepravy – blok s filtrem */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
